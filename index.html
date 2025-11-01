@@ -38,6 +38,7 @@
             color: white;
             padding: 20px;
             text-align: center;
+            position: relative;
         }
         
         .chat-header h1 {
@@ -48,6 +49,25 @@
         .chat-header p {
             font-size: 14px;
             opacity: 0.9;
+        }
+        
+        #clearButton {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        
+        #clearButton:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
         
         .chat-messages {
@@ -87,6 +107,16 @@
             background: white;
             color: #333;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .message.bot .message-bubble a {
+            color: #667eea;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+        
+        .message.bot .message-bubble a:hover {
+            color: #5568d3;
         }
         
         .message-time {
@@ -184,6 +214,7 @@
         <div class="chat-header">
             <h1>🎓 YSALI 2025 Assistant</h1>
             <p>Ask me about participants and program details</p>
+            <button id="clearButton">🗑️ Clear Chat</button>
         </div>
         
         <div class="chat-messages" id="chatMessages">
@@ -212,6 +243,22 @@
         const chatMessages = document.getElementById('chatMessages');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
+        const clearButton = document.getElementById('clearButton');
+        
+        // Convert URLs to clickable links
+        function linkify(text) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, function(url) {
+                // Remove trailing punctuation
+                let cleanUrl = url;
+                let trailingPunctuation = '';
+                while (cleanUrl.match(/[.,;:!?)\]}>]$/)) {
+                    trailingPunctuation = cleanUrl.slice(-1) + trailingPunctuation;
+                    cleanUrl = cleanUrl.slice(0, -1);
+                }
+                return '<a href="' + cleanUrl + '" target="_blank" rel="noopener noreferrer">' + cleanUrl + '</a>' + trailingPunctuation;
+            });
+        }
         
         // Add message to chat
         function addMessage(text, isUser = false) {
@@ -220,7 +267,13 @@
             
             const bubbleDiv = document.createElement('div');
             bubbleDiv.className = 'message-bubble';
-            bubbleDiv.textContent = text;
+            
+            // Convert links to clickable for bot messages
+            if (!isUser) {
+                bubbleDiv.innerHTML = linkify(text);
+            } else {
+                bubbleDiv.textContent = text;
+            }
             
             messageDiv.appendChild(bubbleDiv);
             chatMessages.appendChild(messageDiv);
@@ -248,6 +301,18 @@
         function hideTyping() {
             const typing = document.getElementById('typingIndicator');
             if (typing) typing.remove();
+        }
+        
+        // Clear chat
+        function clearChat() {
+            // Remove all messages except the welcome message
+            chatMessages.innerHTML = `
+                <div class="message bot">
+                    <div class="message-bubble">
+                        Hi! I'm the YSALI 2025 assistant. I can help you with participant information and program details. How can I assist you today?
+                    </div>
+                </div>
+            `;
         }
         
         // Send message to n8n
@@ -302,6 +367,7 @@
                 sendMessage();
             }
         });
+        clearButton.addEventListener('click', clearChat);
         
         // Focus input on load
         messageInput.focus();
